@@ -17,6 +17,8 @@ public sealed class TrayApplicationContext : ApplicationContext
             {
                 service.EnsureUserPath();
             }
+
+            StartupManager.SetEnabled(service.Settings.StartWithWindows);
         }
         catch (Exception ex)
         {

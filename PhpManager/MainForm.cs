@@ -10,6 +10,7 @@ public sealed class MainForm : Form
     private readonly TextBox disabledFunctionsBox = new();
     private readonly Label selectedLabel = new();
     private readonly Button saveIniButton = new();
+    private readonly CheckBox startWithWindowsBox = new();
     private bool refreshing;
 
     public MainForm(PhpManagerService service, Action changed)
@@ -35,6 +36,7 @@ public sealed class MainForm : Form
         selectedLabel.Text = service.Settings.SelectedPhpPath is null
             ? "Selected: none"
             : $"Selected: {Path.GetFileName(service.Settings.SelectedPhpPath)}";
+        startWithWindowsBox.Checked = service.Settings.StartWithWindows && StartupManager.IsEnabled();
 
         versionsList.Items.Clear();
         foreach (var version in service.ScanVersions())
@@ -133,6 +135,10 @@ public sealed class MainForm : Form
         actions.Controls.Add(Button("Activate machine PATH", AddMachinePath));
         actions.Controls.Add(Button("Shell status", ShowShellStatus));
         actions.Controls.Add(Button("Open switch folder", () => PhpManagerService.OpenFolder(AppSettings.RuntimeDirectory)));
+        startWithWindowsBox.Text = "Start with Windows";
+        startWithWindowsBox.AutoSize = true;
+        startWithWindowsBox.CheckedChanged += (_, _) => SaveStartupSetting();
+        actions.Controls.Add(startWithWindowsBox);
 
         selectedLabel.AutoSize = true;
         selectedLabel.Padding = new Padding(0, 10, 0, 0);
@@ -277,6 +283,19 @@ public sealed class MainForm : Form
     {
         service.EnsureSwitchDirectory();
         MessageBox.Show(this, service.GetShellStatus(), "PHP Manager shell status", MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+
+    private void SaveStartupSetting()
+    {
+        if (refreshing)
+        {
+            return;
+        }
+
+        var settings = service.Settings;
+        settings.StartWithWindows = startWithWindowsBox.Checked;
+        service.SaveSettings(settings);
+        StartupManager.SetEnabled(settings.StartWithWindows);
     }
 
     private void LoadIniPanel()

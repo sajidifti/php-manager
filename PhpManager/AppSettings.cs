@@ -8,6 +8,7 @@ public sealed class AppSettings
     public string? SelectedPhpPath { get; set; }
     public List<string> QuickSwitchPaths { get; set; } = [];
     public bool UseUserPath { get; set; } = true;
+    public bool StartWithWindows { get; set; } = true;
 
     public static string AppDirectory =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PhpManager");
