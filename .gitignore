@@ -1,0 +1,53 @@
+# .NET build output
+**/bin/
+**/obj/
+artifacts/
+publish/
+
+# Local build and SDK directories used by this repository
+.dotnet-home/
+.verify-build/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.rsuser
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code and JetBrains IDEs
+.vscode/
+.idea/
+*.sln.iml
+
+# Test and coverage output
+TestResults/
+coverage/
+coverage.*
+*.coverage
+*.coveragexml
+*.trx
+
+# NuGet packages and generated package artifacts
+packages/
+*.nupkg
+*.snupkg
+
+# Logs, dumps, and temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.dmp
+*.pid
+
+# Operating system metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local environment files
+.env
+.env.*
+!.env.example
