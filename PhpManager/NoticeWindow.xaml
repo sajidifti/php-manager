@@ -1,0 +1,29 @@
+<Window
+    x:Class="PhpManager.NoticeWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="PHP Manager">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid x:Name="NoticeTitleBar" Padding="16,0" Background="Transparent">
+            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <Image Source="Assets/php-title.png" Width="22" Height="22" />
+                <TextBlock Text="PHP Manager" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12" Margin="28,22,28,0">
+            <Image Source="Assets/php-title.png" Width="32" Height="32" />
+            <TextBlock x:Name="HeadingText" FontSize="20" FontWeight="SemiBold"
+                       VerticalAlignment="Center" TextWrapping="Wrap" />
+        </StackPanel>
+        <TextBlock x:Name="MessageText" Grid.Row="2" Margin="28,18,28,0" FontSize="14" TextWrapping="Wrap"
+                   IsTextSelectionEnabled="True" MaxWidth="560" HorizontalAlignment="Left" />
+        <Button Grid.Row="3" Content="Close" HorizontalAlignment="Right" Margin="28,22,28,24"
+                Style="{StaticResource AccentButtonStyle}" Click="Close_Click" />
+    </Grid>
+</Window>

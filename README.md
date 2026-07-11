@@ -1,5 +1,9 @@
 # PHP Manager
 
+A WinUI 3 system-tray application for switching local PHP installations and maintaining their `php.ini` files.
+
+The release build is self-contained. Keep the portable publish folder together, or use the generated installer; WinUI 3 applications cannot reliably be reduced to one loose executable because their Windows App SDK resources and native libraries must accompany the app.
+
 A Windows tray app for switching between PHP builds unpacked into one folder, such as:
 
 ```text

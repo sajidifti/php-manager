@@ -1,5 +1,7 @@
 using System.Reflection;
 
+using System.Drawing;
+
 namespace PhpManager;
 
 internal static class AppIcon

@@ -1,29 +1,32 @@
+using System.Drawing;
+using System.Windows.Forms;
+
 namespace PhpManager;
 
-public sealed class TrayApplicationContext : ApplicationContext
+public sealed class TrayApplicationContext : IDisposable
 {
     private readonly PhpManagerService service = new();
+    private readonly MainWindow mainWindow;
     private readonly NotifyIcon trayIcon;
     private readonly Icon appIcon;
-    private MainForm? mainForm;
 
-    public TrayApplicationContext()
+    public TrayApplicationContext(bool showManager = false)
     {
         string? startupWarning = null;
         try
         {
             service.EnsureSwitchDirectory();
-            if (service.Settings.UseUserPath)
-            {
-                service.EnsureUserPath();
-            }
-
+            if (service.Settings.UseUserPath) service.EnsureUserPath();
             StartupManager.SetEnabled(service.Settings.StartWithWindows);
         }
         catch (Exception ex)
         {
             startupWarning = ex.Message;
         }
+
+        // Create WinUI first so its window keeps Per-Monitor V2 DPI awareness.
+        NativeMethods.SetThreadDpiAwarenessContext(NativeMethods.DpiAwarenessContextPerMonitorAwareV2);
+        mainWindow = new MainWindow(service, RebuildMenu);
 
         appIcon = AppIcon.LoadTrayIcon();
         trayIcon = new NotifyIcon
@@ -32,21 +35,14 @@ public sealed class TrayApplicationContext : ApplicationContext
             Text = "PHP Manager",
             Visible = true
         };
-
         trayIcon.MouseClick += (_, e) =>
         {
-            if (e.Button == MouseButtons.Left)
-            {
-                CycleQuick();
-            }
+            if (e.Button == MouseButtons.Left) CycleQuick();
         };
 
         RebuildMenu();
-
-        if (startupWarning is not null)
-        {
-            ShowBalloon($"Startup setup needs attention: {startupWarning}");
-        }
+        if (showManager) mainWindow.ShowAndActivate();
+        if (startupWarning is not null) ShowBalloon($"Startup setup needs attention: {startupWarning}");
     }
 
     public void RebuildMenu()
@@ -54,42 +50,37 @@ public sealed class TrayApplicationContext : ApplicationContext
         var menu = new ContextMenuStrip();
         var versions = service.ScanVersions();
         var quick = service.Settings.QuickSwitchPaths
-            .Where(path => versions.Any(v => string.Equals(v.Path, path, StringComparison.OrdinalIgnoreCase)))
+            .Where(path => versions.Any(version => string.Equals(version.Path, path, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 
         menu.Items.Add("Cycle quick PHP", null, (_, _) => CycleQuick());
         menu.Items.Add(new ToolStripSeparator());
-
-        if (quick.Count > 0)
-        {
-            foreach (var path in quick)
-            {
-                var version = versions.First(v => string.Equals(v.Path, path, StringComparison.OrdinalIgnoreCase));
-                menu.Items.Add(BuildVersionItem(version));
-            }
-        }
-        else
+        if (quick.Count == 0)
         {
             menu.Items.Add("No quick versions selected").Enabled = false;
         }
+        else
+        {
+            foreach (var path in quick)
+            {
+                menu.Items.Add(BuildVersionItem(versions.First(version => string.Equals(version.Path, path, StringComparison.OrdinalIgnoreCase))));
+            }
+        }
 
         var allVersions = new ToolStripMenuItem("All versions");
-        foreach (var version in versions)
-        {
-            allVersions.DropDownItems.Add(BuildVersionItem(version));
-        }
+        foreach (var version in versions) allVersions.DropDownItems.Add(BuildVersionItem(version));
 
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(allVersions);
-        menu.Items.Add("Open manager", null, (_, _) => ShowMainForm());
+        menu.Items.Add("Open manager", null, (_, _) => mainWindow.ShowAndActivate());
         menu.Items.Add("Refresh", null, (_, _) =>
         {
             service.Reload();
             RebuildMenu();
-            mainForm?.RefreshVersions();
+            mainWindow.RefreshVersions();
         });
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Exit", null, (_, _) => ExitThread());
+        menu.Items.Add("Exit", null, (_, _) => ((App)Microsoft.UI.Xaml.Application.Current).Shutdown());
 
         var oldMenu = trayIcon.ContextMenuStrip;
         trayIcon.ContextMenuStrip = menu;
@@ -97,12 +88,11 @@ public sealed class TrayApplicationContext : ApplicationContext
         UpdateTooltip();
     }
 
-    protected override void ExitThreadCore()
+    public void Dispose()
     {
         trayIcon.Visible = false;
         trayIcon.Dispose();
         appIcon.Dispose();
-        base.ExitThreadCore();
     }
 
     private ToolStripMenuItem BuildVersionItem(PhpVersion version)
@@ -114,31 +104,16 @@ public sealed class TrayApplicationContext : ApplicationContext
         return item;
     }
 
-    private void ShowMainForm()
-    {
-        if (mainForm is null || mainForm.IsDisposed)
-        {
-            mainForm = new MainForm(service, RebuildMenu);
-        }
-
-        mainForm.Show();
-        mainForm.WindowState = FormWindowState.Normal;
-        mainForm.Activate();
-    }
-
     private void CycleQuick()
     {
         try
         {
             var selected = service.CycleQuick();
             RebuildMenu();
-            mainForm?.RefreshVersions();
+            mainWindow.RefreshVersions();
             ShowBalloon(selected is null ? "No quick versions selected" : $"Switched to {selected.Name}");
         }
-        catch (Exception ex)
-        {
-            ShowBalloon(ex.Message);
-        }
+        catch (Exception ex) { ShowBalloon(ex.Message); }
     }
 
     private void SwitchTo(string path)
@@ -147,13 +122,10 @@ public sealed class TrayApplicationContext : ApplicationContext
         {
             service.SwitchTo(path);
             RebuildMenu();
-            mainForm?.RefreshVersions();
+            mainWindow.RefreshVersions();
             ShowBalloon($"Switched to {Path.GetFileName(path)}");
         }
-        catch (Exception ex)
-        {
-            ShowBalloon(ex.Message);
-        }
+        catch (Exception ex) { ShowBalloon(ex.Message); }
     }
 
     private void UpdateTooltip()

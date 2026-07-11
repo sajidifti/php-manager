@@ -5,21 +5,28 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $project = Join-Path $root 'PhpManager\PhpManager.csproj'
-$publishDirectory = Join-Path $root 'artifacts\publish\win-x64'
+$publishRoot = Join-Path $root 'artifacts\publish'
+$publishDirectory = Join-Path $publishRoot 'win-x64-release'
 $installerScript = Join-Path $root 'installer\PhpManager.iss'
 
 & (Join-Path $root 'build\Create-Icon.ps1')
 
 if (Test-Path $publishDirectory) {
-    Remove-Item -LiteralPath $publishDirectory -Recurse -Force
+    try {
+        Remove-Item -LiteralPath $publishDirectory -Recurse -Force
+    }
+    catch {
+        $staleDirectory = Join-Path $publishRoot ("stale-" + [DateTime]::Now.ToString('yyyyMMddHHmmss'))
+        Move-Item -LiteralPath $publishDirectory -Destination $staleDirectory
+        Write-Warning "The previous publish output was locked and was moved to $staleDirectory"
+    }
 }
 
 dotnet publish $project `
     -c Release `
     -r win-x64 `
     --self-contained true `
-    -p:PublishSingleFile=true `
-    -p:IncludeNativeLibrariesForSelfExtract=true `
+    -p:PublishSingleFile=false `
     -p:PublishTrimmed=false `
     -p:DebugType=None `
     -p:DebugSymbols=false `

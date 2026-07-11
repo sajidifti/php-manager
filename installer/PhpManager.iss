@@ -35,17 +35,17 @@ Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription:
 Name: "startup"; Description: "Start PHP Manager when I sign in"; GroupDescription: "Startup:"; Flags: checkedonce
 
 [Files]
-Source: "..\artifacts\publish\win-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\artifacts\publish\win-x64-release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\PHP Manager"; Filename: "{app}\{#AppExeName}"
-Name: "{userdesktop}\PHP Manager"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
+Name: "{group}\PHP Manager"; Filename: "{app}\{#AppExeName}"; Parameters: "--show"
+Name: "{userdesktop}\PHP Manager"; Filename: "{app}\{#AppExeName}"; Parameters: "--show"; Tasks: desktopicon
 
 [Registry]
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "PHP Manager"; ValueData: """{app}\{#AppExeName}"""; Flags: uninsdeletevalue; Tasks: startup
 
 [Run]
-Filename: "{app}\{#AppExeName}"; Description: "Start PHP Manager"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#AppExeName}"; Parameters: "--show"; Description: "Start PHP Manager"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
 Filename: "{cmd}"; Parameters: "/C taskkill /IM {#AppExeName} /F >nul 2>&1"; Flags: runhidden; RunOnceId: "StopPhpManager"
